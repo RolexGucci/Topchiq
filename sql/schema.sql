@@ -80,3 +80,13 @@ insert into categories (slug, name_uz, sort_order) values
   ('sayohat', 'Sayohat',      3),
   ('savdo',   'Savdo-sotiq',  4)
 on conflict (slug) do nothing;
+
+-- Xavfsizlik: Row Level Security yoqiladi, hech qanday "policy" qo'shilmaydi.
+-- Natija: tashqaridan (Supabase'ning ochiq/anon API'si orqali) hech kim to'g'ridan-to'g'ri
+-- o'qiy/yoza olmaydi. Bizning Vercel backend'imiz esa "service_role" kaliti bilan
+-- ishlagani uchun RLS'ga qaramay ishlayveradi (service_role RLS'ni chetlab o'tadi).
+alter table listings enable row level security;
+alter table bids enable row level security;
+alter table banned_words enable row level security;
+alter table categories enable row level security;
+alter table bot_subscribers enable row level security;
