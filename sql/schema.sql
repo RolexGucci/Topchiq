@@ -81,6 +81,11 @@ insert into categories (slug, name_uz, sort_order) values
   ('savdo',   'Savdo-sotiq',  4)
 on conflict (slug) do nothing;
 
+-- Nechta marta to'langan bid qilingani (interfeysdagi "N boost" raqami).
+-- Har bir tasdiqlangan to'lovda checkout-webhook buni 1 taga oshiradi.
+alter table listings
+  add column if not exists boost_count int not null default 0;
+
 -- Xavfsizlik: Row Level Security yoqiladi, hech qanday "policy" qo'shilmaydi.
 -- Natija: tashqaridan (Supabase'ning ochiq/anon API'si orqali) hech kim to'g'ridan-to'g'ri
 -- o'qiy/yoza olmaydi. Bizning Vercel backend'imiz esa "service_role" kaliti bilan
