@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Qoidalar — TOPCHIQ.UZ</title>
+<style>
+  :root{
+    --bg:#f8f7ff; --text:#18181b; --muted:#71717a; --card:#ffffff; --border:rgba(0,0,0,.08);
+    --accent1:#8b5cf6; --accent2:#d946ef; --accent3:#22d3ee;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{ --bg:#0a0a12; --text:#ffffff; --muted:rgba(255,255,255,.6); --card:rgba(255,255,255,.04); --border:rgba(255,255,255,.08); }
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:Inter,system-ui,-apple-system,sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:24px 20px 60px}
+  .header{display:flex;align-items:center;gap:12px;padding:8px 0 28px}
+  .logo{
+    width:42px;height:42px;border-radius:12px;flex-shrink:0;
+    background:linear-gradient(135deg,var(--accent1),var(--accent3));
+    display:flex;align-items:center;justify-content:center;font-size:20px;
+  }
+  .brand-title{font-weight:900;font-size:16px;letter-spacing:-0.01em}
+  .brand-sub{font-size:11px;letter-spacing:.05em;color:var(--muted);font-weight:600}
+  a.back{color:var(--muted);text-decoration:none;font-size:13px;font-weight:600;display:inline-flex;align-items:center;gap:4px;margin-bottom:18px}
+  h1{
+    font-size:28px;font-weight:900;letter-spacing:-0.02em;margin:0 0 8px;
+    background:linear-gradient(90deg,var(--accent1),var(--accent2),var(--accent3));
+    -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  }
+  .intro{color:var(--muted);font-size:15px;line-height:1.6;margin:0 0 28px}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:20px;
+    padding:22px;margin-bottom:16px;
+  }
+  h2{font-size:16px;font-weight:800;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+  ol,ul{margin:0;padding-left:20px;color:var(--text);font-size:14px;line-height:1.8}
+  li{margin-bottom:2px}
+  .warn{
+    background:var(--card);border:1px solid var(--border);border-radius:20px;padding:22px;margin-bottom:16px;
+    border-left:3px solid var(--accent2);
+  }
+  .note{font-size:13px;color:var(--muted);line-height:1.7;margin-top:14px;padding-top:14px;border-top:1px solid var(--border)}
+  .footer{text-align:center;margin-top:36px;color:var(--muted);font-size:12px;line-height:1.8}
+  .footer b{color:var(--text)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div class="logo">🏆</div>
+    <div>
+      <div class="brand-title">TOPCHIQ.UZ</div>
+      <div class="brand-sub">TELEGRAM ONLY • PAY TO RANK</div>
+    </div>
+  </div>
+
+  <a class="back" href="/">← Bosh sahifaga qaytish</a>
+
+  <h1>Qoidalar</h1>
+  <p class="intro">
+    Topchiq.uz'da loyiha joylashtirish va bid qilishda amal qiladigan qoidalar.
+  </p>
+
+  <div class="warn">
+    <h2>🚫 Taqiqlangan loyihalar</h2>
+    <p style="font-size:14px;color:var(--muted);margin:0 0 12px">
+      Quyidagi loyihalar reytingga qo'yilmaydi yoki aniqlangan taqdirda olib tashlanadi:
+    </p>
+    <ul>
+      <li>Pornografik yoki seksual kontent</li>
+      <li>Ekstremistik yoki terroristik kontent</li>
+      <li>Scam yoki firibgarlik bilan bog'liq loyihalar</li>
+      <li>Noqonuniy faoliyatga oid loyihalar</li>
+      <li>Telegram tomonidan scam sifatida belgilangan loyihalar</li>
+      <li>Topchiq.uz qoidalarini buzuvchi boshqa loyihalar</li>
+    </ul>
+    <div class="note">
+      Taqiqlangan loyiha olib tashlansa, uning to'lovi qaytarilmaydi.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>💳 Bidlar</h2>
+    <p style="font-size:14px;color:var(--text);margin:0;line-height:1.7">
+      Bidlar yig'ilib boradi — har bir yangi bid avvalgi umumiy biddingizga qo'shiladi.
+      Boshqa loyiha sizdan o'zib ketsa, avvalgi summani qaytadan to'lamaysiz — faqat
+      undan o'zib ketish uchun kerakli farqni bid qilasiz.
+    </p>
+  </div>
+
+  <div class="card">
+    <h2>📊 Kliklar</h2>
+    <p style="font-size:14px;color:var(--text);margin:0;line-height:1.7">
+      Kliklar — Topchiq.uz orqali sizning Telegram loyihangizga o'tgan tashriflar soni.
+      Qo'shimcha statistika saytning <b>Live Stats</b> bo'limida ko'rsatiladi.
+    </p>
+  </div>
+
+  <div class="footer">
+    <b>Topchiq.uz</b> — Cho'qqiga chiq, ko'rin!
+  </div>
+</div>
+</body>
+</html>
