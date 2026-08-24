@@ -16,7 +16,7 @@ export default async function handler(req, res) {
 
   let query = supabase
     .from('listings')
-    .select('id, username, type, name, bio, avatar_url, category, total_bid, clicks', {
+    .select('id, username, type, name, bio, avatar_url, category, total_bid, clicks, boost_count', {
       count: 'exact',
     })
     .eq('status', 'active')

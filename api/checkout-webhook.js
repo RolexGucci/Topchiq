@@ -62,7 +62,7 @@ export default async function handler(req, res) {
   // Listing'ning jami bidini oshiramiz va "active" qilamiz (reytingga chiqadi)
   const { data: listing } = await supabase
     .from('listings')
-    .select('username, name, total_bid')
+    .select('username, name, total_bid, boost_count')
     .eq('id', bid.listing_id)
     .single();
 
@@ -71,7 +71,11 @@ export default async function handler(req, res) {
 
   await supabase
     .from('listings')
-    .update({ total_bid: newTotal, status: 'active' })
+    .update({
+      total_bid: newTotal,
+      status: 'active',
+      boost_count: (listing?.boost_count || 0) + 1,
+    })
     .eq('id', bid.listing_id);
 
   // Revenge: shu bid tufayli kim bosib o'tilgan bo'lsa, ularga xabar yuboramiz.
