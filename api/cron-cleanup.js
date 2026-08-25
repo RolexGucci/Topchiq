@@ -27,6 +27,11 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: error.message });
   }
 
-  console.log(`cron-cleanup: ${data} ta muddati o'tgan bid tozalandi`);
-  res.status(200).json({ ok: true, expired: data });
+  // Eski "onlayn" yozuvlarini ham tozalaymiz
+  const { data: cleaned } = await supabase.rpc('cleanup_presence');
+
+  console.log(
+    `cron-cleanup: ${data} ta bid, ${cleaned || 0} ta presence yozuvi tozalandi`
+  );
+  res.status(200).json({ ok: true, expired: data, presence: cleaned || 0 });
 }
