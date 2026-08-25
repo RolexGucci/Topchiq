@@ -1,96 +1,80 @@
-import { supabase } from './_lib/supabase.js';
-import { notifyOvertakenListings } from './_lib/revenge.js';
+import { settleBid } from './_lib/settle-bid.js';
 
 // POST /api/checkout-webhook
 //
-// !!! DIQQAT — BU FAYL HALI TO'LIQ TAYYOR EMAS !!!
-// Checkout.uz "kassa"ni tasdiqlagach, ular sizga aniq JSON-API hujjatini
-// beradi (qaysi maydon nomlari bilan order_id/summa/status yuborilishi,
-// va MD5 imzoni qanday tekshirish kerakligi). O'sha hujjatni menga
-// ko'rsating (skrinshot yoki matn) — shundan keyin quyidagi ikkita
-// qismni ("TODO" deb belgilangan joylarni) aniq to'ldiraman:
-//   1) Imzo (signature) tekshiruvi — soxta so'rovlarni rad etish uchun SHART
-//   2) Checkout.uz yuboradigan maydon nomlari (order_id, amount, status)
+// Checkout.uz to'lov tasdiqlangach shu manzilga POST yuboradi.
+// Kassa sozlamalarida "Webhook URL" sifatida shu manzilni ko'rsating:
+//   https://SIZNING-DOMENINGIZ/api/checkout-webhook
 //
-// Bu ikkalasi to'g'ri bo'lmasa, tizim ishlamaydi yoki (undan ham yomoni)
-// birov soxta "to'lov muvaffaqiyatli" xabar yuborib, pulsiz reytingga
-// chiqib olishi mumkin — shuning uchun buni taxmin bilan yozmayapman.
+// ============================================================
+// MUHIM XAVFSIZLIK ESLATMASI
+// ============================================================
+// Checkout.uz hujjatida aniq yozilgan: webhook so'rovlariga hech qanday
+// kriptografik imzo qo'shilmaydi. Ya'ni bu manzilni bilgan HAR QANDAY
+// odam soxta "to'lov muvaffaqiyatli" xabarini yuborishi mumkin.
+//
+// Shuning uchun biz bu so'rovning MAZMUNIGA UMUMAN ISHONMAYMIZ.
+// Undan faqat bitta narsani olamiz: "shu buyurtmani tekshirib ko'r" degan
+// signal. Keyin settleBid() Checkout.uz'ning /status_payment endpointiga
+// murojaat qilib, to'lov haqiqatan bo'lganini o'z serveridan so'raydi.
+//
+// Natijada: soxta webhook yuborgan odam hech narsaga erisha olmaydi.
+// ============================================================
+//
+// Yana bir e'tibor: Checkout.uz muvaffaqiyatsiz yetkazishni QAYTA
+// YUBORMAYDI. Shuning uchun webhook yagona umid emas — foydalanuvchi
+// "rahmat" sahifasiga qaytganda /api/payment-status ham xuddi shu
+// tekshiruvni bajaradi. Ikkalasidan qaysi biri birinchi kelsa, o'sha
+// ishlaydi; ikkinchisi hech narsa qilmaydi.
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Faqat POST' });
   }
 
-  // ---- TODO 1: IMZONI TEKSHIRISH (xavfsizlik uchun SHART) ----
-  // const isValid = verifyCheckoutSignature(req.body, process.env.CHECKOUT_UZ_SECRET);
-  // if (!isValid) return res.status(403).json({ error: 'Noto'g'ri imzo' });
+  const body = req.body || {};
+  const data = body.data || {};
 
-  // ---- TODO 2: Checkout.uz'ning haqiqiy maydon nomlari bilan almashtiriladi ----
-  const { order_id, amount, status } = req.body || {};
+  // Checkout.uz'ning maydonlari (llm.txt hujjatidan):
+  //   body.event            -> "payment_confirmed"
+  //   body.payment_system   -> "click" | "payme" | "plum" | "vmcard"
+  //   body.data.order_id    -> create_payment javobidagi _id
+  const orderId = data.order_id;
 
-  if (!order_id) {
-    return res.status(400).json({ error: 'order_id yo\'q' });
+  if (!orderId) {
+    return res.status(400).json({ error: "order_id yo'q" });
   }
 
-  if (status !== 'paid' && status !== 'success') {
-    // To'lov hali tasdiqlanmagan — hech narsa qilmaymiz
-    return res.status(200).json({ ok: true, skipped: true });
+  // Hozircha faqat bitta hodisa turi bor, lekin kelajakda boshqasi
+  // qo'shilsa, uni jimgina o'tkazib yuboramiz.
+  if (body.event && body.event !== 'payment_confirmed') {
+    return res.status(200).json({ ok: true, skipped: body.event });
   }
 
-  // bids jadvalida checkout_order_id orqali mos bidni topamiz
-  const { data: bid, error: findErr } = await supabase
-    .from('bids')
-    .select('id, listing_id, amount, status')
-    .eq('checkout_order_id', order_id)
-    .maybeSingle();
-
-  if (findErr || !bid) {
-    return res.status(404).json({ error: 'Bid topilmadi' });
-  }
-
-  if (bid.status === 'paid') {
-    // Takroriy webhook — xavfsiz, hech narsa qilmaymiz
-    return res.status(200).json({ ok: true, already_paid: true });
-  }
-
-  // Bidni "paid" qilib belgilaymiz
-  await supabase
-    .from('bids')
-    .update({ status: 'paid', paid_at: new Date().toISOString() })
-    .eq('id', bid.id);
-
-  // Listing'ning jami bidini oshiramiz va "active" qilamiz (reytingga chiqadi)
-  const { data: listing } = await supabase
-    .from('listings')
-    .select('username, name, total_bid, boost_count')
-    .eq('id', bid.listing_id)
-    .single();
-
-  const oldTotal = listing?.total_bid || 0;
-  const newTotal = oldTotal + bid.amount;
-
-  await supabase
-    .from('listings')
-    .update({
-      total_bid: newTotal,
-      status: 'active',
-      boost_count: (listing?.boost_count || 0) + 1,
-    })
-    .eq('id', bid.listing_id);
-
-  // Revenge: shu bid tufayli kim bosib o'tilgan bo'lsa, ularga xabar yuboramiz.
-  // Xatolik bo'lsa ham to'lov jarayoniga ta'sir qilmasin deb try/catch bilan o'raymiz.
+  let result;
   try {
-    await notifyOvertakenListings({
-      listingId: bid.listing_id,
-      listingName: listing?.name,
-      listingUsername: listing?.username,
-      oldTotal,
-      newTotal,
-    });
+    result = await settleBid({ checkoutOrderId: orderId });
   } catch (e) {
-    console.error('Revenge xabarnomasi yuborishda xato:', e);
+    console.error('checkout-webhook: kutilmagan xato', e);
+    // 500 qaytarsak Checkout.uz baribir qayta yubormaydi, lekin
+    // ularning panelida "muvaffaqiyatsiz" bo'lib ko'rinadi — shunisi to'g'ri.
+    return res.status(500).json({ error: 'internal' });
   }
 
-  res.status(200).json({ ok: true });
+  if (!result.ok && result.reason === 'not_found') {
+    // Bizda bunday bid yo'q. Ehtimol soxta so'rov yoki boshqa loyihaning
+    // to'lovi. 200 qaytaramiz — qayta urinishlarini istamaymiz.
+    console.warn('checkout-webhook: noma\'lum order_id', orderId);
+    return res.status(200).json({ ok: true, ignored: true });
+  }
+
+  if (result.applied) {
+    console.log(
+      `To'lov tasdiqlandi: @${result.listing.username} -> ` +
+        `${result.listing.newTotal.toLocaleString('uz-UZ')} so'm`
+    );
+  }
+
+  // Checkout.uz'dan kutilgani — oddiy HTTP 200
+  res.status(200).json({ ok: true, applied: result.applied });
 }
