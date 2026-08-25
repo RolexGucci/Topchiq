@@ -102,6 +102,7 @@
        Bir necha daqiqadan so'ng reytingni tekshiring.</p>
     <button class="btn btn-primary" onclick="location.reload()">Qayta tekshirish</button>
     <a href="/" class="btn btn-ghost">Bosh sahifaga</a>
+    <div class="hint" id="reason"></div>
     <div class="hint">Muammo davom etsa: @RolexGucci</div>
   </div>
 
@@ -121,7 +122,7 @@
   if (!bid) { show('timeout'); return; }
 
   var attempts = 0;
-  var MAX = 30; // 30 x 2s = 1 daqiqa
+  var MAX = 20; // ~40 soniya
 
   function poll() {
     attempts++;
@@ -157,6 +158,15 @@
 
         if (d.status === 'expired' || d.status === 'failed') {
           show('expired');
+          return;
+        }
+
+        // Server tekshiruvni bajara olmadi — bekorga aylanib turmaymiz,
+        // darrov sababni ko'rsatamiz.
+        if (d.status === 'error') {
+          document.getElementById('reason').textContent =
+            'Texnik kod: ' + (d.reason || 'nomalum');
+          show('timeout');
           return;
         }
 

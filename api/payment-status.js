@@ -49,10 +49,23 @@ export default async function handler(req, res) {
   }
 
   // Hali "pending" — Checkout.uz'dan tekshirib ko'ramiz
-  const result = await settleBid({ bidId: bid.id });
+  let result;
+  try {
+    result = await settleBid({ bidId: bid.id });
+  } catch (e) {
+    console.error('payment-status: settleBid xatosi', e);
+    return res.status(200).json({ status: 'error', reason: 'settle_crashed' });
+  }
 
   if (result.applied || result.reason === 'already_paid') {
     return res.status(200).json(await withListing(bid, 'paid'));
+  }
+
+  // Tekshiruvning o'zi ishlamadi (Checkout.uz javob bermadi, kalit noto'g'ri
+  // va h.k.). Sahifa bunda bekorga aylanib turmasligi kerak — sababni
+  // qaytaramiz va foydalanuvchiga aniq xabar ko'rsatiladi.
+  if (!result.ok) {
+    return res.status(200).json({ status: 'error', reason: result.reason });
   }
 
   // Muddati o'tganmi?

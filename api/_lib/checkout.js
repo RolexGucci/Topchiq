@@ -22,7 +22,10 @@ function apiKey() {
 
 // Umumiy so'rov yuboruvchi. Timeout qo'yilgan — Checkout.uz javob bermay
 // qolsa, bizning funksiyamiz osilib qolmasligi kerak.
-async function call(path, body, { timeoutMs = 12000 } = {}) {
+// DIQQAT: bu qiymat Vercel'ning funksiya limitidan (10 soniya) KICHIK
+// bo'lishi shart. Aks holda Vercel funksiyani javob qaytarishga ulgurmasdan
+// uzib tashlaydi va foydalanuvchi cheksiz "kutilmoqda" ekranida qoladi.
+async function call(path, body, { timeoutMs = 6000 } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
 
