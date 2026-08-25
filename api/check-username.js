@@ -1,12 +1,12 @@
-import { fetchTelegramChat } from './_lib/telegram.js';
+import { fetchProfile } from './_lib/profile.js';
 import { moderateListing } from './_lib/moderation.js';
 import { supabase } from './_lib/supabase.js';
 
 // GET /api/check-username?username=durov
 //
 // Saytda havola yozilayotganda chaqiriladi va Telegramdan HAQIQIY nom,
-// tur va tavsifni qaytaradi. Bu yerda hech narsa o'ylab topilmaydi:
-// ma'lumot faqat Telegram Bot API'dan keladi, topilmasa "found: false".
+// tur, tavsif va profil rasmini qaytaradi. Hech narsa o'ylab topilmaydi.
+// Kanal, guruh, bot va SHAXSIY PROFILLAR — hammasi ishlaydi.
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
     return res.status(405).json({ error: 'Faqat GET' });
@@ -17,8 +17,8 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Username kiritilmagan' });
   }
 
-  const chat = await fetchTelegramChat(raw);
-  if (!chat.found) {
+  const profile = await fetchProfile(raw);
+  if (!profile.found) {
     return res.status(404).json({
       found: false,
       error: "Bu Telegram havolasi topilmadi. Havola ochiq (public) bo'lishi kerak.",
@@ -26,7 +26,7 @@ export default async function handler(req, res) {
   }
 
   // Taqiqlangan so'z / scam-fake filtri — to'lovga o'tishdan oldin ogohlantiramiz
-  const mod = await moderateListing(chat);
+  const mod = await moderateListing(profile);
   if (mod.blocked) {
     return res.status(403).json({
       found: true,
@@ -39,15 +39,17 @@ export default async function handler(req, res) {
   const { data: existing } = await supabase
     .from('listings')
     .select('total_bid, status')
-    .eq('username', chat.username)
+    .eq('username', profile.username)
     .maybeSingle();
 
   res.status(200).json({
     found: true,
-    username: chat.username,
-    name: chat.name,
-    type: chat.type,
-    bio: chat.bio,
+    username: profile.username,
+    name: profile.name,
+    type: profile.type,
+    bio: profile.bio,
+    avatar_url: profile.avatar_url,
+    subs: profile.subs,
     in_rating: !!(existing && existing.status === 'active'),
     total_bid: existing && existing.status === 'active' ? existing.total_bid : 0,
   });
